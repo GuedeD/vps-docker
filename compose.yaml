@@ -1,0 +1,38 @@
+services:
+  client:
+    image: dema/thread-client:latest # Must match Docker Hub
+    container_name: client
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+    environment:
+      VITE_API_URL: http://server:8000 # Internal Docker DNS
+
+  server:
+    image: dema/thread-server:latest # Must match Docker Hub
+    container_name: server
+    ports:
+      - "8000:8000"
+    environment:
+      MONGO_URI: mongodb://db/Thread # Uses Docker service name 'db'
+      PORT: 8000
+      JWT_SECRET: your_strong_secret_here # NEVER commit real secrets!
+      # Other env vars...
+    depends_on:
+      db:
+        condition: service_healthy # Wait for DB to be ready
+
+  db:
+    image: mongo:6
+    container_name: mongodb
+    volumes:
+      - mongodbdata:/data/db
+    healthcheck:
+      test: mongosh --eval "db.adminCommand('ping')"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mongodbdata:
