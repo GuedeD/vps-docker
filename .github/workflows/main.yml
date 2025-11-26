@@ -23,7 +23,7 @@ jobs:
       - name: Build and push frontend
         working-directory: ./client
         run: |
-          docker build -t dema/thread-client:latest .
+          docker build --build-arg VITE_SERVER_URL=${{ secrets.CLIENT_API_URL }} -t dema/thread-client:latest .
           docker push dema/thread-client:latest
 
       - name: Build and push backend
