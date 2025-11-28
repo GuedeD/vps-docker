@@ -16,7 +16,6 @@ app.use(
   })
 );
 
-console.log("first");
 app.use(express.json());
 app.use(cookieParser());
 app.use("/api", router);
