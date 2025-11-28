@@ -1,6 +1,6 @@
 services:
   client:
-    image: gdfa9571/thread-client
+    image: gdfa95713/thread-client
     container_name: client
     restart: unless-stopped
     ports:
@@ -9,7 +9,7 @@ services:
       - server
 
   server:
-    image: gdfa9571/thread-server
+    image: gdfa95713/thread-server
     container_name: server
     restart: unless-stopped
     ports:
