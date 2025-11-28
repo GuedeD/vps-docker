@@ -1,6 +1,6 @@
 services:
   client:
-    image: dema/thread-client
+    image: gdfa9571/thread-client
     container_name: client
     restart: unless-stopped
     ports:
@@ -9,14 +9,14 @@ services:
       - server
 
   server:
-    image: dema/thread-server
+    image: gdfa9571/thread-server
     container_name: server
     restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
-      MONGO_URI: mongodb://db:27017/threaddb
-      JWT_SECRET: yourSuperSecretKey
+      MONGO_URI: mongodb://db:27017/threadDB
+      JWT_SECRET: yourSecretKey
       CLOUD_NAME: dvfp6c1se
       API_KEY: 348473811782724
       API_SECRET: gOxyd5MJ3UVaqV4lLxfwr0QrfnA

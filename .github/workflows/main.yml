@@ -33,15 +33,15 @@ jobs:
 
       - name: Build & Push Client Image
         run: |
-          docker build -t dema/thread-client ./client
+          docker build -t gdfa9571/thread-client ./client
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker push dema/thread-client
+          docker push gdfa9571/thread-client
 
       - name: Deploy Client to VPS
         run: |
           sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
             cd /root/app &&
-            docker pull dema/thread-client &&
+            docker pull gdfa9571/thread-client &&
             docker compose up -d --no-deps client
           "
 
@@ -54,14 +54,14 @@ jobs:
 
       - name: Build & Push Server Image
         run: |
-          docker build -t dema/thread-server ./server
+          docker build -t gdfa9571/thread-server ./server
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker push dema/thread-server
+          docker push gdfa9571/thread-server
 
       - name: Deploy Server to VPS
         run: |
           sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
             cd /root/app &&
-            docker pull dema/thread-server &&
+            docker pull gdfa9571/thread-server &&
             docker compose up -d --no-deps server
           "
