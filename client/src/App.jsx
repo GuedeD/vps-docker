@@ -27,7 +27,7 @@ const App = () => {
     );
   }
 
-  console.log("first");
+  console.log("first 1");
   return (
     <>
       <Box minHeight={"100vh"} className={darkMode ? "mode" : ""}>

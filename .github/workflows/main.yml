@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # CRITICAL: Get full history for path filtering
+          fetch-depth: 0
 
       - name: Detect file changes
         id: filter
@@ -53,7 +53,9 @@ jobs:
 
       - name: Deploy Client to VPS
         run: |
-          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} <<'EOF'
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
+          -o UserKnownHostsFile=/dev/null \
+          ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} <<'EOF'
           cd /root/app
           docker pull gdfa95713/thread-client:latest
           docker compose up -d --force-recreate --no-deps client
@@ -87,7 +89,9 @@ jobs:
 
       - name: Deploy Server to VPS
         run: |
-          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} <<'EOF'
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
+          -o UserKnownHostsFile=/dev/null \
+          ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} <<'EOF'
           cd /root/app
           docker pull gdfa95713/thread-server:latest
           docker compose up -d --force-recreate --no-deps server
