@@ -1,22 +1,31 @@
 version: "3.8"
 
 services:
+  client:
+    image: gdfa95713/thread-client
+    container_name: client
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    networks:
+      - mern-network
+
   server:
-    image: gdfa95713/thread-server:latest
-    container_name: mern-server
+    image: gdfa95713/thread-server
+    container_name: server
     restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
-      - NODE_ENV=production
-      # Add your Mongo URI and other secrets here, or use an .env file on the VPS
-      # - MONGO_URI=${MONGO_URI}
+      MONGO_URI: mongodb://db:27017/threadDB
+      JWT_SECRET: yourSecretKey
+      CLOUD_NAME: dvfp6c1se
+      API_KEY: 348473811782724
+      API_SECRET: gOxyd5MJ3UVaqV4lLxfwr0QrfnA
+      CLIENT_URL: http://localhost:5173
+    networks:
+      - mern-network
 
-  client:
-    image: gdfa95713/thread-client:latest
-    container_name: mern-client
-    restart: unless-stopped
-    ports:
-      - "5173:5173" # Mapping VPS port 5173 to container port 5173
-    depends_on:
-      - server
+networks:
+  mern-network:
+    driver: bridge
