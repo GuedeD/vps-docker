@@ -49,7 +49,7 @@ jobs:
           tags: gdfa95713/thread-client:latest
 
       - name: Deploy Client to VPS
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
@@ -84,7 +84,7 @@ jobs:
           tags: gdfa95713/thread-server:latest
 
       - name: Deploy Server to VPS
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
