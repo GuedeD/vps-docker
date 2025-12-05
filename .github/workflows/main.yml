@@ -52,11 +52,11 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
+          username: dema
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd /root/app
+            cd /home/dema/app
             docker pull gdfa95713/thread-client:latest
             docker compose up -d --force-recreate --no-deps client
 
@@ -87,10 +87,10 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
+          username: dema
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd /root/app
+            cd /home/dema/app
             docker pull gdfa95713/thread-server:latest
             docker compose up -d --force-recreate --no-deps server
