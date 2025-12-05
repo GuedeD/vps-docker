@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   detect_changes:
@@ -24,44 +26,82 @@ jobs:
             server:
               - 'server/**'
 
+  # COPY COMPOSE FILE TO VPS
+  # We do this every time to ensure the VPS has the definition of the services
+  deploy_compose:
+    needs: detect_changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy docker-compose.yml to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          source: "./docker-compose.yml"
+          target: "/root/app"
+
   build_client:
     needs: detect_changes
-    if: needs.detect_changes.outputs.client_changed == 'true'
+    # Run if client changed OR if triggered manually
+    if: needs.detect_changes.outputs.client_changed == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build & Push Client Image
-        run: |
-          docker build -t gdfa95713/thread-client ./client
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker push gdfa95713/thread-client
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build & Push Client
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          push: true
+          tags: gdfa95713/thread-client:latest
 
       - name: Deploy Client to VPS
-        run: |
-          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
-            cd /root/app &&
-            docker pull gdfa95713/thread-client &&
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            cd /root/app
+            docker pull gdfa95713/thread-client:latest
             docker compose up -d --no-deps client
-          "
 
   build_server:
     needs: detect_changes
-    if: needs.detect_changes.outputs.server_changed == 'true'
+    # Run if server changed OR if triggered manually
+    if: needs.detect_changes.outputs.server_changed == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build & Push Server Image
-        run: |
-          docker build -t gdfa95713/thread-server ./server
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker push gdfa95713/thread-server
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build & Push Server
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          push: true
+          tags: gdfa95713/thread-server:latest
 
       - name: Deploy Server to VPS
-        run: |
-          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
-            cd /root/app &&
-            docker pull gdfa95713/thread-server &&
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            cd /root/app
+            docker pull gdfa95713/thread-server:latest
             docker compose up -d --no-deps server
-          "
