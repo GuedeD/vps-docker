@@ -1,4 +1,4 @@
-# /root/app/docker-compose.yml on your VPS
+# /home/dema/app/docker-compose.yml (updated)
 version: "3.8"
 services:
   client:
@@ -6,11 +6,26 @@ services:
     ports:
       - "5173:5173"
     restart: unless-stopped
-
+    depends_on:
+      - server
   server:
     image: gdfa95713/thread-server:latest
     ports:
       - "8000:8000"
     environment:
+      # *** UPDATE THIS LINE ***
+      - MONGODB_URI=mongodb://mongo:27017/mydatabase # 'mongo' is the service name below
       - NODE_ENV=production
     restart: unless-stopped
+    depends_on:
+      - mongo # Server depends on the mongo service
+  mongo: # *** NEW SERVICE ***
+    image: mongo:6.0 # Or another version you prefer
+    volumes:
+      - mongo-data:/data/db # Persist data outside the container
+    # ports: # Do NOT expose the database port publicly
+    #   - "27017:27017"
+    restart: unless-stopped
+
+volumes: # *** NEW SECTION ***
+  mongo-data:
