@@ -1,31 +1,16 @@
+# /root/app/docker-compose.yml on your VPS
 version: "3.8"
-
 services:
   client:
-    image: gdfa95713/thread-client
-    container_name: client
-    restart: unless-stopped
+    image: gdfa95713/thread-client:latest
     ports:
       - "5173:5173"
-    networks:
-      - mern-network
+    restart: unless-stopped
 
   server:
-    image: gdfa95713/thread-server
-    container_name: server
-    restart: unless-stopped
+    image: gdfa95713/thread-server:latest
     ports:
       - "8000:8000"
     environment:
-      MONGO_URI: mongodb://db:27017/threadDB
-      JWT_SECRET: yourSecretKey
-      CLOUD_NAME: dvfp6c1se
-      API_KEY: 348473811782724
-      API_SECRET: gOxyd5MJ3UVaqV4lLxfwr0QrfnA
-      CLIENT_URL: http://localhost:5173
-    networks:
-      - mern-network
-
-networks:
-  mern-network:
-    driver: bridge
+      - NODE_ENV=production
+    restart: unless-stopped

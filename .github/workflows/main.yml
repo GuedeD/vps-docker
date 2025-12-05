@@ -2,8 +2,7 @@ name: MERN Docker CI/CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   detect_changes:
@@ -14,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # This is important for detecting changes
+          fetch-depth: 0 # CRITICAL: Get full history for path filtering
 
       - name: Detect file changes
         id: filter
@@ -26,55 +25,70 @@ jobs:
             server:
               - 'server/**'
 
-      - name: Debug output
-        run: |
-          echo "Client changed: ${{ steps.filter.outputs.client }}"
-          echo "Server changed: ${{ steps.filter.outputs.server }}"
-
   build_client:
     needs: detect_changes
-    if: needs.detect_changes.outputs.client_changed == 'true'
+    if: ${{ needs.detect_changes.outputs.client_changed == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Build & Push Client Image
-        run: |
-          docker build -t gdfa95713/thread-client ./client
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker push gdfa95713/thread-client
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          push: true
+          tags: gdfa95713/thread-client:latest
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
 
       - name: Deploy Client to VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          script: |
-            cd /root/app
-            docker pull gdfa95713/thread-client
-            docker compose up -d --no-deps client
+        run: |
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} <<'EOF'
+          cd /root/app
+          docker pull gdfa95713/thread-client:latest
+          docker compose up -d --force-recreate --no-deps client
+          EOF
 
   build_server:
     needs: detect_changes
-    if: needs.detect_changes.outputs.server_changed == 'true'
+    if: ${{ needs.detect_changes.outputs.server_changed == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Build & Push Server Image
-        run: |
-          docker build -t gdfa95713/thread-server ./server
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker push gdfa95713/thread-server
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          push: true
+          tags: gdfa95713/thread-server:latest
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
 
       - name: Deploy Server to VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          script: |
-            cd /root/app
-            docker pull gdfa95713/thread-server
-            docker compose up -d --no-deps server
+        run: |
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} <<'EOF'
+          cd /root/app
+          docker pull gdfa95713/thread-server:latest
+          docker compose up -d --force-recreate --no-deps server
+          EOF
