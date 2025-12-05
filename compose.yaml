@@ -14,7 +14,7 @@ services:
       - "8000:8000"
     environment:
       # *** UPDATE THIS LINE ***
-      - MONGODB_URI=mongodb://mongo:27017/mydatabase # 'mongo' is the service name below
+      - MONGODB_URI=mongodb://mongo:27017/threadDB # 'mongo' is the service name below
       - NODE_ENV=production
     restart: unless-stopped
     depends_on:
