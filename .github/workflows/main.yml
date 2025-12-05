@@ -49,13 +49,12 @@ jobs:
           tags: gdfa95713/thread-client:latest
 
       - name: Deploy Client to VPS
-        uses: appleboy/ssh-action@v1.0.4
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }} # Your existing private key
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          script_stop: true
           script: |
             cd /root/app
             docker pull gdfa95713/thread-client:latest
@@ -85,13 +84,12 @@ jobs:
           tags: gdfa95713/thread-server:latest
 
       - name: Deploy Server to VPS
-        uses: appleboy/ssh-action@v1.0.4
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }} # Your existing private key
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          script_stop: true
           script: |
             cd /root/app
             docker pull gdfa95713/thread-server:latest
