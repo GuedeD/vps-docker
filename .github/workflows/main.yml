@@ -92,5 +92,5 @@ jobs:
           port: 22
           script: |
             cd /home/dema/app
-            sudo docker pull gdfa95713/thread-server:latest
-            sudo docker compose up -d --force-recreate --no-deps server
+             docker pull gdfa95713/thread-server:latest
+             docker compose up -d --force-recreate --no-deps server
