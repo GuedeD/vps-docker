@@ -6,7 +6,34 @@ on:
       - main
 
 jobs:
-  build_and_deploy:
+  detect_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      client_changed: ${{ steps.filter.outputs.client }}
+      server_changed: ${{ steps.filter.outputs.server }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # This is important for detecting changes
+
+      - name: Detect file changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            client:
+              - 'client/**'
+            server:
+              - 'server/**'
+
+      - name: Debug output
+        run: |
+          echo "Client changed: ${{ steps.filter.outputs.client }}"
+          echo "Server changed: ${{ steps.filter.outputs.server }}"
+
+  build_client:
+    needs: detect_changes
+    if: needs.detect_changes.outputs.client_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,13 +44,7 @@ jobs:
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
           docker push gdfa95713/thread-client
 
-      - name: Build & Push Server Image
-        run: |
-          docker build -t gdfa95713/thread-server ./server
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker push gdfa95713/thread-server
-
-      - name: Deploy to VPS
+      - name: Deploy Client to VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -32,5 +53,28 @@ jobs:
           script: |
             cd /root/app
             docker pull gdfa95713/thread-client
+            docker compose up -d --no-deps client
+
+  build_server:
+    needs: detect_changes
+    if: needs.detect_changes.outputs.server_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build & Push Server Image
+        run: |
+          docker build -t gdfa95713/thread-server ./server
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker push gdfa95713/thread-server
+
+      - name: Deploy Server to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            cd /root/app
             docker pull gdfa95713/thread-server
-            docker compose up -d
+            docker compose up -d --no-deps server
