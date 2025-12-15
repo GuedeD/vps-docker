@@ -1,16 +1,14 @@
-FROM node:20
-
+# Build stage
+FROM node:20-alpine as builder
 WORKDIR /app
-
 COPY package*.json ./
-RUN npm install
-
+RUN npm ci --only=production
 COPY . .
-
 RUN npm run build
 
-EXPOSE 5173
-
-# We use --host so it listens on all network interfaces (0.0.0.0)
-# We use --port 5173 to force the specific port
-CMD ["npm", "run", "preview", "--", "--host", "--port", "5173"]⁄
+# Production stage
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx-client.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

@@ -8,7 +8,7 @@ const cors = require("cors");
 dotenv.config();
 const app = express();
 connectDB();
-console.log("good one 1 ");
+console.log("good one 2 ");
 app.use(
   cors({
     origin: [process.env.CLIENT_URL],
@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use("/api", router);
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 8000;
 app.listen(port, () => {
   console.log(`App is listening on PORT : ${port}`);
 });
