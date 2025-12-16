@@ -36,7 +36,7 @@ router.post("/logout", auth, logout);
 router.get("/me", auth, myInfo);
 
 router.post("/post", auth, addPost);
-router.get("/post", auth, allPost);
+router.get("/post", allPost);
 router.delete("/post/:id", auth, deletePost);
 router.put("/post/like/:id", auth, likePost);
 router.put("/repost/:id", auth, repost);

@@ -15,7 +15,14 @@ app.use(
     credentials: true,
   })
 );
-
+// In your Express app (server.js or app.js)
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
 app.use(express.json());
 app.use(cookieParser());
 app.use("/api", router);

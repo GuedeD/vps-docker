@@ -1,31 +1,71 @@
-# /home/dema/app/docker-compose.yml (updated)
-version: "3.8"
 services:
   client:
     image: gdfa95713/thread-client:latest
-    ports:
-      - "80:80"
+    container_name: client
     restart: unless-stopped
+    ports:
+      - "80:80" # Changed from 5173:5173 to standard HTTP port
     depends_on:
       - server
+    networks:
+      - mern-network
+
   server:
     image: gdfa95713/thread-server:latest
+    container_name: server
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
-      # *** UPDATE THIS LINE ***
-      - MONGODB_URI=mongodb://mongo:27017/threadDB # 'mongo' is the service name below
-      - NODE_ENV=production
-    restart: unless-stopped
+      NODE_ENV: production
+      MONGO_URI: mongodb://admin:${MONGO_PASSWORD}@mongodb:27017/threadDB?authSource=admin
+      JWT_SECRET: ${JWT_SECRET}
+      CLOUD_NAME: ${CLOUD_NAME}
+      API_KEY: ${API_KEY}
+      API_SECRET: ${API_SECRET}
+      CLIENT_URL: https://demastore.xyz # Update this to your real domain
     depends_on:
-      - mongo # Server depends on the mongo service
-  mongo: # *** NEW SERVICE ***
-    image: mongo:6.0 # Or another version you prefer
-    volumes:
-      - mongo-data:/data/db # Persist data outside the container
-    # ports: # Do NOT expose the database port publicly
-    #   - "27017:27017"
-    restart: unless-stopped
+      mongodb:
+        condition: service_healthy
+    networks:
+      - mern-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8000/api/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-volumes: # *** NEW SECTION ***
-  mongo-data:
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: threadDB
+    networks:
+      - mern-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodb_data:
+
+networks:
+  mern-network:
+    driver: bridge
