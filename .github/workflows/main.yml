@@ -5,7 +5,29 @@ on:
     branches: [main]
 
 jobs:
-  build_and_deploy:
+  detect_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      client_changed: ${{ steps.filter.outputs.client }}
+      server_changed: ${{ steps.filter.outputs.server }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect file changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            client:
+              - 'client/**'
+            server:
+              - 'server/**'
+
+  build_client:
+    needs: detect_changes
+    if: needs.detect_changes.outputs.client_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,24 +41,17 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build & Push Client
+      - name: Build & Push Client Image
         uses: docker/build-push-action@v5
         with:
           context: ./client
-          file: ./client/Dockerfile
           push: true
           tags: gdfa95713/thread-client:latest
+          cache-from: type=registry,ref=gdfa95713/thread-client:buildcache
+          cache-to: type=registry,ref=gdfa95713/thread-client:buildcache,mode=max
 
-      - name: Build & Push Server
-        uses: docker/build-push-action@v5
-        with:
-          context: ./server
-          file: ./server/Dockerfile
-          push: true
-          tags: gdfa95713/thread-server:latest
-
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy Client to VPS
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
           username: dema
@@ -44,12 +59,42 @@ jobs:
           port: 22
           script: |
             cd /home/dema/app
-            # Pull latest compose file and Nginx config
-            git pull origin main
-
-            # Pull new images
             docker pull gdfa95713/thread-client:latest
-            docker pull gdfa95713/thread-server:latest
+            docker compose up -d --force-recreate --no-deps client
 
-            # Start services
-            docker compose up -d --force-recreate --build nginx
+  build_server:
+    needs: detect_changes
+    if: needs.detect_changes.outputs.server_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build & Push Server Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          push: true
+          tags: gdfa95713/thread-server:latest
+          cache-from: type=registry,ref=gdfa95713/thread-server:buildcache
+          cache-to: type=registry,ref=gdfa95713/thread-server:buildcache,mode=max
+
+      - name: Deploy Server to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: dema
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /home/dema/app
+            docker pull gdfa95713/thread-server:latest
+            docker compose up -d --force-recreate --no-deps server
