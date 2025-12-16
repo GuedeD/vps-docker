@@ -6,7 +6,7 @@ on:
   workflow_dispatch: # Allows manual triggering from GitHub UI
 
 env:
-  DOCKERHUB_USERNAME: gdfa95713
+  DOCKER_USERNAME: gdfa95713
 
 jobs:
   detect_changes:
@@ -44,17 +44,17 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push client image
         uses: docker/build-push-action@v5
         with:
           context: ./client
           push: true
-          tags: ${{ env.DOCKERHUB_USERNAME }}/thread-client:latest
-          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/thread-client:buildcache
-          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/thread-client:buildcache,mode=max
+          tags: ${{ env.DOCKER_USERNAME }}/thread-client:latest
+          cache-from: type=registry,ref=${{ env.DOCKER_USERNAME }}/thread-client:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_USERNAME }}/thread-client:buildcache,mode=max
 
   build_and_push_server:
     needs: detect_changes
@@ -70,7 +70,7 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push server image
@@ -78,9 +78,9 @@ jobs:
         with:
           context: ./server
           push: true
-          tags: ${{ env.DOCKERHUB_USERNAME }}/thread-server:latest
-          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/thread-server:buildcache
-          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/thread-server:buildcache,mode=max
+          tags: ${{ env.DOCKER_USERNAME }}/thread-server:latest
+          cache-from: type=registry,ref=${{ env.DOCKER_USERNAME }}/thread-server:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_USERNAME }}/thread-server:buildcache,mode=max
 
   deploy:
     needs: [build_and_push_client, build_and_push_server]

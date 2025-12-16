@@ -8,7 +8,7 @@ const cors = require("cors");
 dotenv.config();
 const app = express();
 connectDB();
-console.log("good one 7 ");
+console.log("good one ");
 app.use(
   cors({
     origin: [process.env.CLIENT_URL],
