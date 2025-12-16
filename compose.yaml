@@ -1,28 +1,31 @@
+# /home/dema/app/docker-compose.yml (updated)
 version: "3.8"
-
 services:
   client:
     image: gdfa95713/thread-client:latest
+    ports:
+      - "5173:5173"
     restart: unless-stopped
     depends_on:
       - server
-    ports:
-      - "80:80"
-
   server:
     image: gdfa95713/thread-server:latest
-    restart: unless-stopped
+    ports:
+      - "8000:8000"
     environment:
-      MONGODB_URI: mongodb://mongo:27017/threadDB
-      NODE_ENV: production
-    depends_on:
-      - mongo
-
-  mongo:
-    image: mongo:6
+      # *** UPDATE THIS LINE ***
+      - MONGODB_URI=mongodb://mongo:27017/threadDB # 'mongo' is the service name below
+      - NODE_ENV=production
     restart: unless-stopped
+    depends_on:
+      - mongo # Server depends on the mongo service
+  mongo: # *** NEW SERVICE ***
+    image: mongo:6.0 # Or another version you prefer
     volumes:
-      - mongo-data:/data/db
+      - mongo-data:/data/db # Persist data outside the container
+    # ports: # Do NOT expose the database port publicly
+    #   - "27017:27017"
+    restart: unless-stopped
 
-volumes:
+volumes: # *** NEW SECTION ***
   mongo-data:
