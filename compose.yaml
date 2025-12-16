@@ -3,32 +3,26 @@ version: "3.8"
 services:
   client:
     image: gdfa95713/thread-client:latest
-    ports:
-      - "80:80"
     restart: unless-stopped
     depends_on:
       - server
+    ports:
+      - "80:80"
 
   server:
     image: gdfa95713/thread-server:latest
-    expose:
-      - "8000"
-    environment:
-      - MONGODB_URI=mongodb://mongo:27017/threadDB
-      - NODE_ENV=production
-      - PORT=8000
     restart: unless-stopped
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/threadDB
+      NODE_ENV: production
     depends_on:
       - mongo
 
   mongo:
-    image: mongo:6.0
+    image: mongo:6
+    restart: unless-stopped
     volumes:
       - mongo-data:/data/db
-    restart: unless-stopped
-    # Only expose internally, not to the internet
-    expose:
-      - "27017"
 
 volumes:
   mongo-data:
