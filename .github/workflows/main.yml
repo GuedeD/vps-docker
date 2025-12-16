@@ -3,13 +3,40 @@ name: MERN Docker CI/CD
 on:
   push:
     branches: [main]
+  workflow_dispatch: # Allows manual triggering from GitHub UI
+
+env:
+  DOCKERHUB_USERNAME: gdfa95713
 
 jobs:
-  build:
+  detect_changes:
     runs-on: ubuntu-latest
-
+    outputs:
+      client_changed: ${{ steps.filter.outputs.client }}
+      server_changed: ${{ steps.filter.outputs.server }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect file changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            client:
+              - 'client/**'
+            server:
+              - 'server/**'
+
+  build_and_push_client:
+    needs: detect_changes
+    if: ${{ needs.detect_changes.outputs.client_changed == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -17,25 +44,51 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Build & Push Client Image
+      - name: Build and push client image
         uses: docker/build-push-action@v5
         with:
           context: ./client
           push: true
-          tags: gdfa95713/thread-client:latest
+          tags: ${{ env.DOCKERHUB_USERNAME }}/thread-client:latest
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/thread-client:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/thread-client:buildcache,mode=max
 
-      - name: Build & Push Server Image
+  build_and_push_server:
+    needs: detect_changes
+    if: ${{ needs.detect_changes.outputs.server_changed == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push server image
         uses: docker/build-push-action@v5
         with:
           context: ./server
           push: true
-          tags: gdfa95713/thread-server:latest
+          tags: ${{ env.DOCKERHUB_USERNAME }}/thread-server:latest
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/thread-server:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/thread-server:buildcache,mode=max
 
+  deploy:
+    needs: [build_and_push_client, build_and_push_server]
+    if: always() && (needs.build_and_push_client.result == 'success' || needs.build_and_push_server.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to VPS
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: dema
@@ -43,6 +96,8 @@ jobs:
           port: 22
           script: |
             cd /home/dema/app
-            git pull origin main
             docker compose pull
             docker compose up -d --force-recreate
+            docker image prune -f
+            echo "Deployment completed successfully!"
+            docker compose ps

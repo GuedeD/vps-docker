@@ -4,7 +4,7 @@ services:
   client:
     image: gdfa95713/thread-client:latest
     ports:
-      - "5173:5173"
+      - "80:80"
     restart: unless-stopped
     depends_on:
       - server
