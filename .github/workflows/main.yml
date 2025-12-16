@@ -96,8 +96,43 @@ jobs:
           port: 22
           script: |
             cd /home/dema/app
-            docker compose pull
-            docker compose up -d --force-recreate
+            # Enable error handling - fail on first error
+            set -e
+
+            # Pull only the images that were built in this workflow
+            if [ "${{ needs.build_and_push_client.result }}" == "success" ]; then
+              docker compose pull client
+            fi
+            if [ "${{ needs.build_and_push_server.result }}" == "success" ]; then
+              docker compose pull server
+            fi
+
+            # Recreate only the services that were updated
+            SERVICES_TO_RECREATE=""
+            if [ "${{ needs.build_and_push_client.result }}" == "success" ]; then
+              SERVICES_TO_RECREATE="$SERVICES_TO_RECREATE client"
+            fi
+            if [ "${{ needs.build_and_push_server.result }}" == "success" ]; then
+              SERVICES_TO_RECREATE="$SERVICES_TO_RECREATE server"
+            fi
+
+            if [ -n "$SERVICES_TO_RECREATE" ]; then
+              docker compose up -d --force-recreate $SERVICES_TO_RECREATE
+            fi
+
+            # Clean up old images
             docker image prune -f
+
             echo "Deployment completed successfully!"
+            echo "Services updated: $SERVICES_TO_RECREATE"
             docker compose ps
+
+            # Verify services are healthy
+            echo "Verifying service health..."
+            sleep 10  # Give containers time to start
+            if docker compose exec server curl -f http://localhost:8000/api/health; then
+              echo "✅ Server is healthy"
+            else
+              echo "❌ Server health check failed"
+              exit 1
+            fi

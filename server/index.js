@@ -8,7 +8,7 @@ const cors = require("cors");
 dotenv.config();
 const app = express();
 connectDB();
-console.log("good i think 5 ");
+console.log("good i think  ");
 app.use(
   cors({
     origin: [process.env.CLIENT_URL],
@@ -17,11 +17,7 @@ app.use(
 );
 // In your Express app (server.js or app.js)
 app.get("/api/health", (req, res) => {
-  res.json({
-    status: "healthy",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
+  res.json({ status: "healthy", uptime: process.uptime() });
 });
 app.use(express.json());
 app.use(cookieParser());
