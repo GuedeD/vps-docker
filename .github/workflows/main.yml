@@ -81,6 +81,7 @@ jobs:
           tags: ${{ env.DOCKER_USERNAME }}/thread-server:latest
           cache-from: type=registry,ref=${{ env.DOCKER_USERNAME }}/thread-server:buildcache
           cache-to: type=registry,ref=${{ env.DOCKER_USERNAME }}/thread-server:buildcache,mode=max
+
   deploy:
     needs: [build_and_push_client, build_and_push_server]
     if: always() && (needs.build_and_push_client.result == 'success' || needs.build_and_push_server.result == 'success')
@@ -95,9 +96,17 @@ jobs:
           port: 22
           script: |
             cd /home/dema/app
+            # Pull latest images
             docker compose pull
+            # Recreate containers with new images
             docker compose up -d --force-recreate
-            # Verify deployment
-            sleep 5
-            echo "✅ Deployment successful!"
+            # Clean up old images
+            docker image prune -f
+            echo "✅ Deployment completed successfully!"
+            # Verify services are working
+            sleep 10
+            echo "Verifying API endpoint..."
+            curl -f http://localhost:8080/api/health || echo "⚠️ API health check failed"
+            echo "Verifying frontend..."
+            curl -I http://localhost:8080 || echo "⚠️ Frontend check failed"
             docker compose ps
