@@ -25,7 +25,7 @@ export const serviceApi = createApi({
         method: "POST",
         body: data,
       }),
-      invalidateTags: ["Me"],
+      // invalidateTags: ["Me"],
     }),
     login: builder.mutation({
       query: (data) => ({
@@ -33,14 +33,14 @@ export const serviceApi = createApi({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["Me"],
+      // invalidatesTags: ["Me"],
     }),
     myInfo: builder.query({
       query: () => ({
-        url: "me",
-        method: "GET",
+        // url: "me",
+        // method: "GET",
       }),
-      providesTags: ["Me"],
+      // providesTags: ["Me"],
       async onQueryStarted(params, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
