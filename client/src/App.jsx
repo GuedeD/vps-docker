@@ -15,17 +15,17 @@ import { useMyInfoQuery } from "./redux/service";
 
 const App = () => {
   const { darkMode } = useSelector((state) => state.service);
-  const { data, isError } = useMyInfoQuery();
+  // const { data, isError } = useMyInfoQuery();
 
-  if (isError || !data) {
-    return (
-      <BrowserRouter>
-        <Routes>
-          <Route exact path="/*" element={<Register />} />
-        </Routes>
-      </BrowserRouter>
-    );
-  }
+  // if (isError || !data) {
+  //   return (
+  //     <BrowserRouter>
+  //       <Routes>
+  //         <Route exact path="/*" element={<Register />} />
+  //       </Routes>
+  //     </BrowserRouter>
+  //   );
+  // }
 
   console.log("it should be dsfsdfsdfgdfgddhood tfsddfsdsfoo 2");
   return (
