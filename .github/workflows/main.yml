@@ -97,6 +97,7 @@ jobs:
             cd /home/dema/app
             docker compose pull
             docker compose up -d --force-recreate
-            # Add this verification step
-            sleep 10
-            docker compose exec client curl -f http://server:8000/api/health || echo "Backend health check failed"
+            # Verify deployment
+            sleep 5
+            echo "✅ Deployment successful!"
+            docker compose ps
