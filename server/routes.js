@@ -24,16 +24,36 @@ const {
 } = require("./controllers/comment-controller");
 
 const router = express.Router();
-router.get("/users/search/:query", auth, searchUser);
-router.get("/post/:id", auth, singlePost);
+router.get(
+  "/users/search/:query",
+  // auth,
+  searchUser
+);
+router.get(
+  "/post/:id",
+  // auth,
+  singlePost
+);
 // router.get("/me", auth, myInfo);
 router.get("/post", allPost);
-router.get("/user/:id", auth, userDetails);
+router.get(
+  "/user/:id",
+  // auth,
+  userDetails
+);
 
 router.post("/signin", signin);
 router.post("/login", login);
-router.post("/logout", auth, logout);
-router.post("/post", auth, addPost);
+router.post(
+  "/logout",
+  //  auth,
+  logout
+);
+router.post(
+  "/post",
+  //  auth,
+  addPost
+);
 router.post("/comment/:id", auth, addComment);
 
 router.put("/update", auth, updateProfile);
