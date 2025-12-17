@@ -8,7 +8,7 @@ const cors = require("cors");
 dotenv.config();
 const app = express();
 connectDB();
-console.log("good too ");
+console.log("good too 2");
 app.use(
   cors({
     origin: [process.env.CLIENT_URL],
@@ -16,8 +16,13 @@ app.use(
   })
 );
 // In your Express app (server.js or app.js)
+// Add this health check endpoint
 app.get("/api/health", (req, res) => {
-  res.json({ status: "healthy", uptime: process.uptime() });
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
 });
 app.use(express.json());
 app.use(cookieParser());
