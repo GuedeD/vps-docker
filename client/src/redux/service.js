@@ -7,9 +7,8 @@ import {
   deleteThePost,
 } from "./slice";
 
-const BASE_URL = `${
-  import.meta.env.VITE_SERVER_URL || "http://localhost:8000"
-}/api/`;
+// Replace the problematic code with this:
+const BASE_URL = `${import.meta.env.VITE_API_URL || "/api"}/`;
 console.log("first");
 export const serviceApi = createApi({
   reducerPath: "serviceApi",
